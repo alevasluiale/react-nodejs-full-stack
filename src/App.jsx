@@ -42,6 +42,8 @@ const App = () => {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+          paddingBottom: "20px",
+          paddingTop: "20px",
         }}
       >
         <Button variant="contained" onClick={() => fetchData("button_1")}>
@@ -55,44 +57,41 @@ const App = () => {
         </Button>
       </Stack>
 
-      <TableContainer component={Paper} className="tableContainer">
-        <Table
-          sx={{ minWidth: 650 }}
-          lg={{ minWidth: 700 }}
-          size="small"
-          aria-label="simple table"
-          className="tableContainer"
-        >
-          <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell align="right">Calories</TableCell>
-              <TableCell align="right">Year</TableCell>
-              <TableCell align="right">Imdb ID</TableCell>
-              <TableCell align="right">Poster</TableCell>
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {data.map((row) => (
-              <TableRow
-                key={row.name}
-                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-              >
-                <TableCell component="th" scope="row">
-                  {row.name}
-                </TableCell>
-                <TableCell align="right">{row.Title}</TableCell>
-                <TableCell align="right">{row.Year}</TableCell>
-                <TableCell align="right">{row.imdbID}</TableCell>
-                <TableCell align="right">
-                  <img src={row.Poster} alt="{{Title}} Poster" />
-                </TableCell>
+      {Boolean(data) && (
+        <TableContainer component={Paper} className="tableContainer">
+          <Table
+            sx={{ minWidth: 500, width: "500px", margin: "auto" }}
+            size="small"
+            aria-label="simple table"
+            className="tableContainer"
+          >
+            <TableHead>
+              <TableRow>
+                <TableCell align="right">Title</TableCell>
+                <TableCell align="right">Year</TableCell>
+                <TableCell align="right">Imdb ID</TableCell>
+                <TableCell align="right">Poster</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+
+            <TableBody>
+              {data.map((row) => (
+                <TableRow
+                  key={row.name}
+                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                >
+                  <TableCell align="right">{row.Title}</TableCell>
+                  <TableCell align="right">{row.Year}</TableCell>
+                  <TableCell align="right">{row.imdbID}</TableCell>
+                  <TableCell align="right">
+                    <img src={row.Poster} alt="{{Title}} Poster" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </>
   );
 };
