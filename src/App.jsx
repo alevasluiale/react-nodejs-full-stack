@@ -33,7 +33,6 @@ const App = () => {
     return <CircularProgress />;
   }
 
-  console.log(data);
   return (
     <>
       <Stack
@@ -56,15 +55,21 @@ const App = () => {
         </Button>
       </Stack>
 
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} size="small" aria-label="simple table">
+      <TableContainer component={Paper} className="tableContainer">
+        <Table
+          sx={{ minWidth: 650 }}
+          lg={{ minWidth: 700 }}
+          size="small"
+          aria-label="simple table"
+          className="tableContainer"
+        >
           <TableHead>
             <TableRow>
               <TableCell>Title</TableCell>
               <TableCell align="right">Calories</TableCell>
-              <TableCell align="right">Fat&nbsp;(g)</TableCell>
-              <TableCell align="right">Carbs&nbsp;(g)</TableCell>
-              <TableCell align="right">Protein&nbsp;(g)</TableCell>
+              <TableCell align="right">Year</TableCell>
+              <TableCell align="right">Imdb ID</TableCell>
+              <TableCell align="right">Poster</TableCell>
             </TableRow>
           </TableHead>
 
@@ -80,7 +85,9 @@ const App = () => {
                 <TableCell align="right">{row.Title}</TableCell>
                 <TableCell align="right">{row.Year}</TableCell>
                 <TableCell align="right">{row.imdbID}</TableCell>
-                <TableCell align="right">{row.Poster}</TableCell>
+                <TableCell align="right">
+                  <img src={row.Poster} alt="{{Title}} Poster" />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

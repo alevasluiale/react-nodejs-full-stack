@@ -30,7 +30,7 @@ app.get("/button_1", async (req, res) => {
     );
     const moviesFromApi = response.data.Search;
 
-    const uniqueMovies = getUniqueMovies(moviesFromApi);
+    const uniqueMovies = await getUniqueMovies(moviesFromApi);
 
     for (const movie of uniqueMovies) {
       const { Poster, Title, Type, Year, imdbID } = movie;
@@ -52,9 +52,26 @@ app.get("/button_1", async (req, res) => {
       });
     }
 
-    res
-      .status(200)
-      .json({ message: "Movies data and images saved successfully" });
+    const selectMovieQuery =
+      "SELECT Movies.*, Posters.PosterUrl FROM Movies INNER JOIN Posters ON Movies.id = Posters.movieId";
+    const dbMovies = db.query(selectMovieQuery, (err, results) => {
+      if (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error" });
+      } else {
+        const moviesArray = results.map((movie) => ({
+          id: movie.id,
+          Title: movie.Title,
+          Type: movie.Type,
+          Year: movie.Year,
+          imdbID: movie.imdbID,
+          Poster: movie.PosterUrl, // Include the PosterUrl in the response
+        }));
+
+        console.log(moviesArray);
+        res.status(200).json(moviesArray);
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -74,11 +91,6 @@ function getUniqueMovies(moviesFromAPI) {
           reject(err);
         } else {
           const existingIds = result.map((row) => row.imdbID);
-          console.log(
-            existingIds,
-            moviesFromAPI,
-            moviesFromAPI.filter((movie) => !existingIds.includes(movie.imdbID))
-          );
           resolve(
             moviesFromAPI.filter(
               (movie) => !existingIds.includes(movie.imdbID)
