@@ -28,9 +28,11 @@ app.get("/button_1", async (req, res) => {
     const response = await axios.get(
       "http://www.omdbapi.com/?s=Matrix&apikey=720c3666"
     );
-    const movies = response.data.Search;
+    const moviesFromApi = response.data.Search;
 
-    for (const movie of movies) {
+    const uniqueMovies = getUniqueMovies(moviesFromApi);
+
+    for (const movie of uniqueMovies) {
       const { Poster, Title, Type, Year, imdbID } = movie;
       const imageUrl = await fetchAndSavePosterImage(Poster);
       const insertQuery =
@@ -58,6 +60,35 @@ app.get("/button_1", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// Function to check if movies exist in the database and return only unique movies
+function getUniqueMovies(moviesFromAPI) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT imdbID FROM Movies WHERE imdbID IN (?)";
+
+    db.query(
+      query,
+      [moviesFromAPI.map((movie) => movie.imdbID)],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          const existingIds = result.map((row) => row.imdbID);
+          console.log(
+            existingIds,
+            moviesFromAPI,
+            moviesFromAPI.filter((movie) => !existingIds.includes(movie.imdbID))
+          );
+          resolve(
+            moviesFromAPI.filter(
+              (movie) => !existingIds.includes(movie.imdbID)
+            ) || []
+          );
+        }
+      }
+    );
+  });
+}
 
 // Helper function to fetch and save the poster image in PosterImages table
 async function fetchAndSavePosterImage(posterUrl) {
