@@ -69,7 +69,6 @@ const moviesMiddleware = async (req, res, next) => {
   const path = req.path;
 
   try {
-    // Replace 'https://example.com/movies' with the actual URL to fetch movies data from the 3rd-party API
     const response = await axios.get(moviesURL[path]);
     const moviesFromApi = response.data.Search;
 
