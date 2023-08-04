@@ -3,7 +3,7 @@ const cors = require("cors");
 const axios = require("axios");
 const mysql = require("mysql");
 const app = express();
-
+const moviesURL = require("./constants");
 app.use(cors());
 
 const db = mysql.createConnection({
@@ -19,63 +19,6 @@ db.connect((err) => {
     throw err;
   }
   console.log("Connected to MySQL database");
-});
-
-// Endpoint to fetch movies data from 3rd-party URL and save poster image URLs
-app.get("/button_1", async (req, res) => {
-  try {
-    // Replace 'https://example.com/movies' with the actual URL to fetch movies data from the 3rd-party API
-    const response = await axios.get(
-      "http://www.omdbapi.com/?s=Matrix&apikey=720c3666"
-    );
-    const moviesFromApi = response.data.Search;
-
-    const uniqueMovies = await getUniqueMovies(moviesFromApi);
-
-    for (const movie of uniqueMovies) {
-      const { Poster, Title, Type, Year, imdbID } = movie;
-      const imageUrl = await fetchAndSavePosterImage(Poster);
-      const insertQuery =
-        "INSERT INTO Movies (Title, Type, Year, imdbID) VALUES (?, ?, ?, ?)";
-      db.query(insertQuery, [Title, Type, Year, imdbID], (err, result) => {
-        if (err) {
-          throw err;
-        }
-        const movieId = result.insertId;
-        const insertImageUrlQuery =
-          "INSERT INTO Posters (movieId, PosterUrl) VALUES (?, ?)";
-        db.query(insertImageUrlQuery, [movieId, imageUrl], (err) => {
-          if (err) {
-            throw err;
-          }
-        });
-      });
-    }
-
-    const selectMovieQuery =
-      "SELECT Movies.*, Posters.PosterUrl FROM Movies INNER JOIN Posters ON Movies.id = Posters.movieId";
-    const dbMovies = db.query(selectMovieQuery, (err, results) => {
-      if (err) {
-        console.error(err);
-        res.status(500).json({ error: "Internal server error" });
-      } else {
-        const moviesArray = results.map((movie) => ({
-          id: movie.id,
-          Title: movie.Title,
-          Type: movie.Type,
-          Year: movie.Year,
-          imdbID: movie.imdbID,
-          Poster: movie.PosterUrl, // Include the PosterUrl in the response
-        }));
-
-        console.log(moviesArray);
-        res.status(200).json(moviesArray);
-      }
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
 });
 
 // Function to check if movies exist in the database and return only unique movies
@@ -102,8 +45,11 @@ function getUniqueMovies(moviesFromAPI) {
   });
 }
 
-// Helper function to fetch and save the poster image in PosterImages table
+// Helper function to fetch and save the poster image in Posters table
 async function fetchAndSavePosterImage(posterUrl) {
+  if (posterUrl === "N/A") {
+    return null;
+  }
   try {
     const response = await axios.get(posterUrl, {
       responseType: "arraybuffer",
@@ -118,49 +64,73 @@ async function fetchAndSavePosterImage(posterUrl) {
   }
 }
 
-app.get("/button_4", async (req, res) => {
+// Middleware to fetch movies data from 3rd-party URL and save poster image URLs
+const moviesMiddleware = async (req, res, next) => {
+  const path = req.path;
+
   try {
-    const thirdPartyURL = "http://www.omdbapi.com/?s=Matrix&apikey=720c3666";
-    const response = await axios.get(thirdPartyURL);
+    // Replace 'https://example.com/movies' with the actual URL to fetch movies data from the 3rd-party API
+    const response = await axios.get(moviesURL[path]);
+    const moviesFromApi = response.data.Search;
 
-    res.json(response.data.Search);
-  } catch (error) {
-    console.error("Error fetching data from the third-party URL:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to fetch data from the third-party URL" });
+    const uniqueMovies = await getUniqueMovies(moviesFromApi);
+
+    for (const movie of uniqueMovies) {
+      const { Poster, Title, Type, Year, imdbID } = movie;
+      const imageBase64 = await fetchAndSavePosterImage(Poster);
+      const insertQuery =
+        "INSERT INTO Movies (Title, Type, Year, imdbID,button) VALUES (?, ?, ?, ?,?)";
+      db.query(
+        insertQuery,
+        [Title, Type, Year, imdbID, path],
+        (err, result) => {
+          if (err) {
+            throw err;
+          }
+          const movieId = result.insertId;
+          if (imageBase64) {
+            const insertImageUrlQuery =
+              "INSERT INTO Posters (movieId, base64_data) VALUES (?, ?)";
+            db.query(insertImageUrlQuery, [movieId, imageBase64], (err) => {
+              if (err) {
+                throw err;
+              }
+            });
+          }
+        }
+      );
+    }
+
+    // const selectMovieQuery =
+    //   "SELECT Movies.*, Posters.base64_data FROM Movies INNER JOIN Posters ON Movies.id = Posters.movieId";
+    // const dbMovies = db.query(selectMovieQuery, (err, results) => {
+    //   if (err) {
+    //     console.error(err);
+    //     res.status(500).json({ error: "Internal server error" });
+    //   } else {
+    //     const moviesArray = results.map((movie) => ({
+    //       id: movie.id,
+    //       Title: movie.Title,
+    //       Type: movie.Type,
+    //       Year: movie.Year,
+    //       imdbID: movie.imdbID,
+    //       Poster: movie.base64_data, // Include the PosterUrl in the response
+    //     }));
+
+    //     console.log(moviesArray);
+    //     res.status(200).json(moviesArray);
+    //   }
+    // });
+    res.status(200).json(moviesFromApi);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
   }
-});
+};
 
-app.get("/button_2", async (req, res) => {
-  try {
-    const thirdPartyURL =
-      "http://www.omdbapi.com/?s=Matrix%20Reloaded&apikey=720c3666 ";
-    const response = await axios.get(thirdPartyURL);
-
-    res.json(response.data.Search);
-  } catch (error) {
-    console.error("Error fetching data from the third-party URL:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to fetch data from the third-party URL" });
-  }
-});
-
-app.get("/button_3", async (req, res) => {
-  try {
-    const thirdPartyURL =
-      "http://www.omdbapi.com/?s=Matrix%20Revolutions&apikey=720c3666";
-    const response = await axios.get(thirdPartyURL);
-
-    res.json(response.data.Search);
-  } catch (error) {
-    console.error("Error fetching data from the third-party URL:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to fetch data from the third-party URL" });
-  }
-});
+app.get("/button_1", moviesMiddleware);
+app.get("/button_2", moviesMiddleware);
+app.get("/button_3", moviesMiddleware);
 
 // Start the server
 const port = 4005;

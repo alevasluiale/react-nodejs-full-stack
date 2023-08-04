@@ -84,7 +84,11 @@ const App = () => {
                   <TableCell align="right">{row.Year}</TableCell>
                   <TableCell align="right">{row.imdbID}</TableCell>
                   <TableCell align="right">
-                    <img src={row.Poster} alt="{{Title}} Poster" />
+                    {row.Poster !== "N/A" ? (
+                      <img src={row.Poster} alt="" />
+                    ) : (
+                      ""
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
