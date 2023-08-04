@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
-import TableComponent from "./components/TableComponent";
+import DataTable from "./components/DataTable";
 import CircularProgress from "@mui/material/CircularProgress";
 
 const App = () => {
@@ -50,7 +50,7 @@ const App = () => {
           Button 3
         </Button>
       </Stack>
-      <TableComponent data={data} />
+      <DataTable data={data} />
     </>
   );
 };

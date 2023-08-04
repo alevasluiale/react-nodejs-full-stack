@@ -1,8 +1,12 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { render, screen } from "@testing-library/react";
+import App from "./App";
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+jest.mock("axios", () => jest.fn());
+
+test("renders buttons", async () => {
+  const { findByText } = render(<App />);
+
+  expect(screen.getByText("Button 1")).toBeInTheDocument();
+  expect(screen.getByText("Button 2")).toBeInTheDocument();
+  expect(screen.getByText("Button 3")).toBeInTheDocument();
 });
